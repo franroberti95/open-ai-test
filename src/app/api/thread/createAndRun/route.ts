@@ -1,7 +1,7 @@
 import OpenAI from "openai";
 import {NextRequest, NextResponse} from "next/server";
 
-const API_KEY = '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';
+const API_KEY = process.env.API_KEY;
 const ASSISTANT_ID = 'asst_pRH9M4KmkCPW4q50VHOEgZD9';
 const THREAD_ID = 'thread_m731qcix7fK4LpOh7a9NUe6c';
 const API_URL = `https://api.openai.com/v1/threads/${THREAD_ID}/messages`;
@@ -32,6 +32,6 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json(threadMessages);
     } catch (e) {
-        return NextResponse.json("ERR");
+        return NextResponse.json(e);
     }
 }
