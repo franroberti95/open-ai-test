@@ -26,7 +26,7 @@ async function createThread(){
     }
 }
 
-async function queryCustomModel(prompt) {
+async function queryCustomModel(prompt:any) {
     try {
         const response = await axios.post(`api/thread/createAndRun`, {content: prompt}, {
             headers: {
@@ -54,9 +54,9 @@ const Chat = () => {
         mutationFn: () => queryCustomModel(question),
         onSuccess: (data) => setLastResponse(data)
     });
-    const parseResponse = (res) => {
+    const parseResponse = (res: any) => {
         const messages = res.body.data;
-        const conversation = messages.map((msg, index) => {
+        const conversation = messages.map((msg: any, index:any) => {
             const messageContent = msg.content[0]?.text?.value || '';
             return {
                 key: index,
@@ -71,7 +71,7 @@ const Chat = () => {
         <h2>Chat with OpenAI Assistant</h2>
         <div style={{marginTop: 100}}/>
         <div style={{ marginBottom: '20px' }}>
-            {lastResponse && parseResponse(lastResponse)?.map(msg => (
+            {lastResponse && parseResponse(lastResponse)?.map( (msg: any) => (
                 <div key={msg.key} style={{ textAlign: msg.role === 'user' ? 'left' : 'right' }}>
                     <div><strong>{msg.role === 'user' ? 'You' : 'Assistant'}:</strong></div>
                     <div>{msg.message}</div>

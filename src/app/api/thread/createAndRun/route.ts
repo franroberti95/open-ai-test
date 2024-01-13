@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import { NextResponse } from "next/server";
+import {NextRequest, NextResponse} from "next/server";
 
 const API_KEY = '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';
 const ASSISTANT_ID = 'asst_pRH9M4KmkCPW4q50VHOEgZD9';
@@ -10,7 +10,7 @@ const openai = new OpenAI({
     apiKey: API_KEY
 });
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
     try {
         const content = (await req.json())?.content;
         const run = await openai.beta.threads.createAndRun({

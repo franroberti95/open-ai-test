@@ -2,7 +2,7 @@
 
 import {QueryClient, QueryClientProvider} from "react-query";
 
-export const queryClient = new QueryClient({
+const queryClient = new QueryClient({
     defaultOptions: {
         queries: {
             retry: 0,
