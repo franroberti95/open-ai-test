@@ -12,7 +12,7 @@ const openai = new OpenAI({
 
 export async function POST(req: NextRequest) {
     try {
-        const content = (await req.json())?.content;
+        const {content, threadId} = (await req.json());
         const run = await openai.beta.threads.createAndRun({
             assistant_id: ASSISTANT_ID,
             thread: {
@@ -25,12 +25,14 @@ export async function POST(req: NextRequest) {
         await new Promise( (resolve) => {
             setTimeout(resolve, 8000)
         })
-
         const threadMessages = await openai.beta.threads.messages.list(
             run.thread_id
         );
 
-        return NextResponse.json(threadMessages);
+        return NextResponse.json({
+            threadMessages,
+            threadId: run.thread_id
+        });
     } catch (e) {
         return NextResponse.json(e);
     }

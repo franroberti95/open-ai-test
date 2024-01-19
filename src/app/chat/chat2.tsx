@@ -1,4 +1,3 @@
-'use client';
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/Avatar/Avatar";
 import { Textarea } from "@/app/components/TextArea/TextArea";
 import { Button } from "@/app/components/Button/Button";
@@ -12,6 +11,7 @@ const Main = styled.main`
   display: flex;
   flex-direction: column;
   height: 100vh; // Example, adjust as needed
+  background-color: #ffffff; // Example, adjust as needed
   // Add more styling as needed
 `;
 
@@ -28,14 +28,12 @@ const ChatContainer = styled.div`
   flex: 1;
   overflow-y: auto;
   padding: 1rem;
-  display: flex;
-  flex-direction: column-reverse;
   // Add more styling as needed
 `;
 
 const MessageGroup = styled.div`
   display: flex;
-  align-items: center;
+  align-items: end;
   gap: 0.5rem; // Example, adjust as needed
   // Add more styling as needed
 `;
@@ -93,9 +91,9 @@ const InputGroup = styled.div`
   // Add more styling as needed
 `;
 export default function Component() {
-    const [question, setQuestion] = useState('');
-    const [lastResponse, setLastResponse] = useState('');
-    const [threadId, setThreadId] = useState(null);
+    const [ question , setQuestion ] = useState('');
+    const [ lastResponse, setLastResponse ] = useState('');
+    const [ threadId, setThreadId ] = useState(null);
 
     const createThreadMutation = useMutation({
         mutationFn: () => queryCustomModel(question),
@@ -109,16 +107,11 @@ export default function Component() {
         onSuccess: (data) => setLastResponse(data)
     });
     const onSend = () => {
-        if (threadId)
+        console.log(threadId);
+        if(threadId)
             sendMessageMutation.mutateAsync();
         else
             createThreadMutation.mutateAsync();
-    }
-    const handleKeyDown = (event: any) => {
-        if (event.key === 'Enter') {
-            onSend();
-            setTimeout(()=>setQuestion(''),100);
-        }
     }
     const parseResponse = (res: any) => {
         const messages = res.body.data;
@@ -136,13 +129,14 @@ export default function Component() {
     return (
         <Main>
             <Header>
-                <h1>Introducción a las Finanzas</h1>
+                <h1>Chat</h1>
             </Header>
             <ChatContainer>
                 {lastResponse && parseResponse(lastResponse)?.map( (msg: any) =>
                     msg.role === 'user' ?
                         <MessageGroup key={msg.key}>
                             <Avatar>
+                                <AvatarImage alt="User avatar" src="/placeholder-avatar.jpg" />
                                 <AvatarFallback>You</AvatarFallback>
                             </Avatar>
                             <Message>
@@ -156,14 +150,15 @@ export default function Component() {
                                 <div style={{ fontSize: 'smaller', color: 'gray' }}>{msg.timestamp}</div>
                             </Message>
                             <Avatar>
-                                <AvatarFallback>IA</AvatarFallback>
+                                <AvatarImage alt="User avatar" src="/placeholder-avatar.jpg" />
+                                <AvatarFallback>Assistant</AvatarFallback>
                             </Avatar>
                         </MessageGroup>)}
 
             </ChatContainer>
             <Footer>
                 <InputGroup>
-                    <Textarea value={question} onChange={e => setQuestion(e.target.value)} onKeyDown={handleKeyDown} placeholder="Type your message..." />
+                    <Textarea onChange={e => setQuestion(e.target.value)} placeholder="Type your message..." />
                     <Button disabled={createThreadMutation.isLoading || sendMessageMutation.isLoading} onClick={onSend}>{
                         createThreadMutation.isLoading || sendMessageMutation.isLoading ? 'Loading...' : 'Send'
                     }</Button>
