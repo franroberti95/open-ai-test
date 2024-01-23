@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
         });
 
         await new Promise( (resolve) => {
-            setTimeout(resolve, 14000)
+            setTimeout(resolve, 10000)
         })
 
         const threadMessages = await openai.beta.threads.messages.list(threadId);
