@@ -3,7 +3,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/Avatar/Ava
 import { Textarea } from "@/app/components/TextArea/TextArea";
 import { Button } from "@/app/components/Button/Button";
 import styled from 'styled-components';
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {useMutation} from "react-query";
 import axios from "axios";
 
@@ -92,10 +92,30 @@ const InputGroup = styled.div`
   gap: 0.5rem;
   // Add more styling as needed
 `;
+
+async function getMessages(threadId: any) {
+    try {
+        const response = await axios.post(`api/thread/pullMessagesFromThread`, {threadId}, {
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json',
+                'OpenAI-Beta': 'assistants=v1'
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error('Error querying the custom model:', error);
+        return null;
+    }
+}
+
+const FETCH_TIMEOUT_MILLIS = 12000;
 export default function Component() {
     const [question, setQuestion] = useState('');
     const [lastResponse, setLastResponse] = useState('');
     const [threadId, setThreadId] = useState(null);
+    const [ fetchTimeout, setFetchTimeout ] = useState(0);
 
     const createThreadMutation = useMutation({
         mutationFn: () => queryCustomModel(question),
@@ -105,15 +125,39 @@ export default function Component() {
         }
     });
     const sendMessageMutation = useMutation({
-        mutationFn: () => sendMessage(threadId, question),
-        onSuccess: (data) => setLastResponse(data)
+        mutationFn: () => sendMessage(threadId, question)
+    });
+
+    const getMessagesMutation = useMutation({
+        mutationFn: () => getMessages(threadId),
+        onSuccess: (data) => {
+            setLastResponse(data);
+        }
     });
     const onSend = () => {
-        if (threadId)
+        if (threadId) {
             sendMessageMutation.mutateAsync();
-        else
+            startTimeoutCountdown();
+            setTimeout(()=> getMessagesMutation.mutate(),FETCH_TIMEOUT_MILLIS)
+        }else
             createThreadMutation.mutateAsync();
     }
+    const startTimeoutCountdown = () => {
+        setFetchTimeout(FETCH_TIMEOUT_MILLIS);
+    }
+
+    const onPull = () => {
+        getMessagesMutation.mutate();
+        startTimeoutCountdown();
+    }
+
+    useEffect(()=> {
+
+        if(fetchTimeout !== 0)
+            setTimeout(()=>setFetchTimeout(prev => prev-1000),1000);
+
+    },[fetchTimeout])
+
     const handleKeyDown = (event: any) => {
         if (event.key === 'Enter') {
             onSend();
@@ -121,6 +165,7 @@ export default function Component() {
         }
     }
     const parseResponse = (res: any) => {
+        if(!res?.body?.data) return null;
         const messages = res.body.data;
         const conversation = messages.map((msg: any, index:any) => {
             const messageContent = msg.content[0]?.text?.value || '';
@@ -140,20 +185,20 @@ export default function Component() {
             </Header>
             <ChatContainer>
                 {lastResponse && parseResponse(lastResponse)?.map( (msg: any) =>
-                    msg.role === 'user' ?
-                        <MessageGroup key={msg.key}>
+                    msg?.role === 'user' ?
+                        <MessageGroup key={msg?.key}>
                             <Avatar>
                                 <AvatarFallback>You</AvatarFallback>
                             </Avatar>
                             <Message>
-                                <p>{msg.message}</p>
-                                <div style={{ fontSize: 'smaller', color: 'gray' }}>{msg.timestamp}</div>
+                                <p>{msg?.message}</p>
+                                <div style={{ fontSize: 'smaller', color: 'gray' }}>{msg?.timestamp}</div>
                             </Message>
                         </MessageGroup>:
-                        <MessageGroup key={msg.key}>
+                        <MessageGroup key={msg?.key}>
                             <Message className="from-user">
-                                <p>{msg.message}</p>
-                                <div style={{ fontSize: 'smaller', color: 'gray' }}>{msg.timestamp}</div>
+                                <p>{msg?.message}</p>
+                                <div style={{ fontSize: 'smaller', color: 'gray' }}>{msg?.timestamp}</div>
                             </Message>
                             <Avatar>
                                 <AvatarFallback>IA</AvatarFallback>
@@ -164,9 +209,18 @@ export default function Component() {
             <Footer>
                 <InputGroup>
                     <Textarea value={question} onChange={e => setQuestion(e.target.value)} onKeyDown={handleKeyDown} placeholder="Type your message..." />
-                    <Button disabled={createThreadMutation.isLoading || sendMessageMutation.isLoading} onClick={onSend}>{
+                    <Button disabled={createThreadMutation.isLoading || fetchTimeout!== 0 || sendMessageMutation.isLoading} onClick={onSend}>{
                         createThreadMutation.isLoading || sendMessageMutation.isLoading ? 'Loading...' : 'Send'
                     }</Button>
+
+                    {
+                        /*
+                        *
+                    <Button disabled={getMessagesMutation.isLoading || fetchTimeout!== 0 || !threadId} onClick={onPull}>
+                        {fetchTimeout ? fetchTimeout/1000: 'Fetch Messages'}
+                    </Button>
+                    * */
+                    }
                 </InputGroup>
             </Footer>
         </Main>

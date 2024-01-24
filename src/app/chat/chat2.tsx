@@ -84,16 +84,36 @@ async function sendMessage(threadId: any, prompt:any) {
     }
 }
 
+async function getMessages(threadId: any) {
+    try {
+        const response = await axios.post(`api/thread/pullMessagesFromThread`, {threadId}, {
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json',
+                'OpenAI-Beta': 'assistants=v1'
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        console.error('Error querying the custom model:', error);
+        return null;
+    }
+}
+
 const InputGroup = styled.div`
   display: flex;
   align-items: center;
   gap: 0.5rem;
   // Add more styling as needed
 `;
+
+const FETCH_TIMEOUT_MILLIS = 8000;
 export default function Component() {
     const [ question , setQuestion ] = useState('');
     const [ lastResponse, setLastResponse ] = useState('');
     const [ threadId, setThreadId ] = useState(null);
+    const [ fetchTimeout, setFetchTimeout ] = useState(0);
 
     const createThreadMutation = useMutation({
         mutationFn: () => queryCustomModel(question),
@@ -104,10 +124,27 @@ export default function Component() {
     });
     const sendMessageMutation = useMutation({
         mutationFn: () => sendMessage(threadId, question),
-        onSuccess: (data) => setLastResponse(data)
+        onSuccess: () => setFetchTimeout(0)
     });
+    const getMessagesMutation = useMutation({
+        mutationFn: () => getMessages(threadId),
+        onSuccess: (data) => {
+            setLastResponse(data);
+            startTimeoutCountdown();
+        }
+    });
+
+    const startTimeoutCountdown = () => {
+        setFetchTimeout(FETCH_TIMEOUT_MILLIS);
+        let interval = setInterval(() => {
+            if (fetchTimeout === 0)
+                clearInterval(interval);
+            else
+                setFetchTimeout(fetchTimeout - 1000);
+        }, 1000);
+    }
+
     const onSend = () => {
-        console.log(threadId);
         if(threadId)
             sendMessageMutation.mutateAsync();
         else
@@ -159,9 +196,12 @@ export default function Component() {
             <Footer>
                 <InputGroup>
                     <Textarea onChange={e => setQuestion(e.target.value)} placeholder="Type your message..." />
-                    <Button disabled={createThreadMutation.isLoading || sendMessageMutation.isLoading} onClick={onSend}>{
+                    <Button disabled={createThreadMutation.isLoading || fetchTimeout!== 0 || sendMessageMutation.isLoading} onClick={onSend}>{
                         createThreadMutation.isLoading || sendMessageMutation.isLoading ? 'Loading...' : 'Send'
                     }</Button>
+                    <Button disabled={fetchTimeout!== 0} onClick={getMessagesMutation}>
+                        Fetch Messages
+                    </Button>
                 </InputGroup>
             </Footer>
         </Main>

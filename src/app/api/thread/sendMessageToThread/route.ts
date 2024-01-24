@@ -14,23 +14,17 @@ export async function POST(req: NextRequest) {
         const {content, threadId} = await req.json();
         //openai.beta.threads.messages.create(threadId, content);
 
-        openai.beta.threads.messages.create(threadId,{
+        await openai.beta.threads.messages.create(threadId,{
             content: content,
             role: "user",
 
-        })
+        });
 
         await openai.beta.threads.runs.create(threadId, {
             assistant_id: ASSISTANT_ID
         });
 
-        await new Promise( (resolve) => {
-            setTimeout(resolve, 8000)
-        })
-
-        const threadMessages = await openai.beta.threads.messages.list(threadId);
-
-        return NextResponse.json(threadMessages);
+        return NextResponse.json("OK");
     } catch (e) {
         return NextResponse.json(e);
     }
