@@ -135,11 +135,12 @@ export default function Component() {
         }
     });
     const onSend = () => {
-        if (threadId) {
+        startTimeoutCountdown();
+        setTimeout(()=> getMessagesMutation.mutate(),FETCH_TIMEOUT_MILLIS)
+
+        if (threadId)
             sendMessageMutation.mutateAsync();
-            startTimeoutCountdown();
-            setTimeout(()=> getMessagesMutation.mutate(),FETCH_TIMEOUT_MILLIS)
-        }else
+       else
             createThreadMutation.mutateAsync();
     }
     const startTimeoutCountdown = () => {
