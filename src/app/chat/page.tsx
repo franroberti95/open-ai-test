@@ -210,7 +210,7 @@ export default function Component() {
                 <InputGroup>
                     <Textarea value={question} onChange={e => setQuestion(e.target.value)} onKeyDown={handleKeyDown} placeholder="Type your message..." />
                     <Button disabled={createThreadMutation.isLoading || fetchTimeout!== 0 || sendMessageMutation.isLoading} onClick={onSend}>{
-                        createThreadMutation.isLoading || sendMessageMutation.isLoading ? 'Loading...' : 'Send'
+                        createThreadMutation.isLoading || sendMessageMutation.isLoading ? 'Loading...' : (fetchTimeout ? fetchTimeout/1000: 'Send')
                     }</Button>
 
                     {
