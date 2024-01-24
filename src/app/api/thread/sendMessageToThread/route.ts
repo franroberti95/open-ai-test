@@ -25,11 +25,10 @@ export async function POST(req: NextRequest) {
         });
 
         await new Promise( (resolve) => {
-            setTimeout(resolve, 10000)
+            setTimeout(resolve, 8000)
         })
 
         const threadMessages = await openai.beta.threads.messages.list(threadId);
-
 
         return NextResponse.json(threadMessages);
     } catch (e) {
