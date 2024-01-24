@@ -110,7 +110,7 @@ async function getMessages(threadId: any) {
     }
 }
 
-const FETCH_TIMEOUT_MILLIS = 12000;
+const FETCH_TIMEOUT_MILLIS = 25000;
 export default function Component() {
     const [question, setQuestion] = useState('');
     const [lastResponse, setLastResponse] = useState('');
